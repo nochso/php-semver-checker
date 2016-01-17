@@ -42,24 +42,24 @@ class CompareCommand extends Command {
 		$startTime = microtime(true);
 
 		$configPath = $input->getOption('config');
-		$configuration = $configPath ? Configuration::fromFile($configPath) : Configuration::defaults();
+		$config = $configPath ? Configuration::fromFile($configPath) : Configuration::defaults();
 		$im = new InputMerger();
-		$im->merge($input, $configuration);
+		$im->merge($input, $config);
 
 		// Set overrides
-		LevelMapping::setOverrides($configuration->getLevelMapping());
+		LevelMapping::setOverrides($config->getLevelMapping());
 
 		$finder = new Finder();
 		$scannerBefore = new Scanner();
 		$scannerAfter = new Scanner();
 
-		$sourceBefore = $input->getArgument('source-before');
-		$includeBefore = $input->getOption('include-before');
-		$excludeBefore = $input->getOption('exclude-before');
+		$sourceBefore = $config->get('source-before');
+		$includeBefore = $config->get('include-before');
+		$excludeBefore = $config->get('exclude-before');
 
-		$sourceAfter = $input->getArgument('source-after');
-		$includeAfter = $input->getOption('include-after');
-		$excludeAfter = $input->getOption('exclude-after');
+		$sourceAfter = $config->get('source-after');
+		$includeAfter = $config->get('include-after');
+		$excludeAfter = $config->get('exclude-after');
 
 		$sourceBefore = $finder->findFromString($sourceBefore, $includeBefore, $excludeBefore);
 		$sourceAfter = $finder->findFromString($sourceAfter, $includeAfter, $excludeAfter);
@@ -68,8 +68,8 @@ class CompareCommand extends Command {
 		$identicalCount = $sourceFilter->filter($sourceBefore, $sourceAfter);
 
 		$progress = new ProgressScanner($output);
-		$progress->addJob($input->getArgument('source-before'), $sourceBefore, $scannerBefore);
-		$progress->addJob($input->getArgument('source-after'), $sourceAfter, $scannerAfter);
+		$progress->addJob($config->get('source-before'), $sourceBefore, $scannerBefore);
+		$progress->addJob($config->get('source-after'), $sourceAfter, $scannerAfter);
 		$progress->runJobs();
 
 		$registryBefore = $scannerBefore->getRegistry();
@@ -79,10 +79,10 @@ class CompareCommand extends Command {
 		$report = $analyzer->analyze($registryBefore, $registryAfter);
 
 		$reporter = new Reporter($report);
-		$reporter->setFullPath($input->getOption('full-path'));
+		$reporter->setFullPath($config->get('full-path'));
 		$reporter->output($output);
 
-		$toJson = $input->getOption('to-json');
+		$toJson = $config->get('to-json');
 		if ($toJson) {
 			$jsonReporter = new JsonReporter($report, $toJson);
 			$jsonReporter->output();
